@@ -32,17 +32,9 @@ const app = express();
 connectDB();
 
 // ── Security & performance middleware ─────────────────────────────────────────
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
-
-// ✅ Manual CORS handling (fixes Render preflight issue)
+// ✅ Allow all origins (CORS खुला)
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-
-  console.log("Incoming origin:", origin);
-
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
+  res.setHeader("Access-Control-Allow-Origin", "*");
 
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
