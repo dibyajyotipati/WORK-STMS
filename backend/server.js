@@ -32,10 +32,7 @@ const app = express();
 connectDB();
 
 // ── Security & performance middleware ─────────────────────────────────────────
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://work-stms-6ryn.vercel.app"
-];
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
 
 // ✅ Manual CORS handling (fixes Render preflight issue)
 app.use((req, res, next) => {
