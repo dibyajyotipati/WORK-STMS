@@ -10,7 +10,7 @@ if (missing.length) {
 }
 
 const express = require('express');
-const cors = require('cors');
+// const cors = require('cors'); ❌ not needed anymore
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
@@ -37,20 +37,28 @@ const allowedOrigins = [
   "https://work-stms-6ryn.vercel.app"
 ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    console.log("Incoming origin:", origin); // debug
+// ✅ Manual CORS handling (fixes Render preflight issue)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
 
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS blocked"));
-    }
-  },
-  credentials: true
-}));
+  console.log("Incoming origin:", origin);
 
-app.options("*", cors());
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+
+  // Handle preflight request
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
 app.use(helmet());
 app.use(compression());
 
@@ -66,7 +74,7 @@ if (process.env.NODE_ENV === 'production') {
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
+  windowMs: 15 * 60 * 1000,
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
@@ -105,7 +113,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 // ── Start server ──────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 const server = app.listen(PORT, () => {
   console.log(`🚀 STMS Backend running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });
@@ -121,7 +129,7 @@ process.on('uncaughtException', (err) => {
   server.close(() => process.exit(1));
 });
 
-// Graceful shutdown on SIGTERM (e.g. Docker stop)
+// Graceful shutdown on SIGTERM
 process.on('SIGTERM', () => {
   console.log('SIGTERM received. Closing server gracefully...');
   server.close(() => {
