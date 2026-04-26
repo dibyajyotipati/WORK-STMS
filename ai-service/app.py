@@ -178,7 +178,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # ───────────────────────── Routes ─────────────────────────
 
 @app.get("/health")
